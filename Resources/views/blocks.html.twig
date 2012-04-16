@@ -8,6 +8,12 @@
     
     
     <script type="text/javascript">
+        function imageFormat( cellvalue, options, rowObject ){
+	   return '<img src="/bundles/oppextranet/images/'+cellvalue+'" />';
+        }; 
+        function imageUnFormat( cellvalue, options, cell){
+	   return $('img', cell).attr('src');
+        };
     $(document).ready(function() {
         var $configs = $.extend({
                 minDate: new Date(2007, 0, 1),
@@ -29,6 +35,15 @@
         {
             jQuery(elem).datepicker($configs);
         }
+/*
+        imageFormat = function( cellvalue, options, rowObject ){
+	   return '<img src="/bundles/oppextranet/images/'+cellvalue+'" />';
+        } 
+        imageUnFormat = function( cellvalue, options, cell){
+	   return $('img', cell).attr('src');
+        }
+*/
+
         
        
         jQuery("#{{grid.name|raw}}").jqGrid({
