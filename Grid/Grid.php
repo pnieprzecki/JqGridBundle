@@ -249,13 +249,13 @@ class Grid
                   $date       = new \DateTime($dateString);
                   switch ($rule['op']) {
                     case 'ge':
-                      $this->qb->andWhere($c->getFieldIndex() . ' >=  ?'.$paramnumber);
+                      $this->qb->andWhere($c->getFieldIndex() . ' >=  ?' . $paramnumber);
                       break;
                     case 'le':
-                      $this->qb->andWhere($c->getFieldIndex() . ' <=  ?'.$paramnumber);
+                      $this->qb->andWhere($c->getFieldIndex() . ' <=  ?' . $paramnumber);
                       break;
                     default:
-                      $this->qb->andWhere($c->getFieldIndex() . ' >  ?'.$paramnumber);
+                      $this->qb->andWhere($c->getFieldIndex() . ' >  ?' . $paramnumber);
                       break;
                   }
                   $this->qb->setParameter($paramnumber, $date);
@@ -315,6 +315,7 @@ class Grid
         }
 
         $response['rows'][$key]['cell'] = $val;
+        $response['rows'][$key]['id'] = $row['id'];
       }
 
       return $response;

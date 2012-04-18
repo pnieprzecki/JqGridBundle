@@ -131,6 +131,7 @@ class Column
       $model['name'] = $prefix . $model['name'];
     }
 
+    // usuń ciapki z nazw funkcji
     $jsFunctions = '';
     if (array_key_exists('jsFunctions', $model) && $model['jsFunctions']) {
       $jsFunctions = $model['jsFunctions'];

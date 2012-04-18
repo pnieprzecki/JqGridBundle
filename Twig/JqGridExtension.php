@@ -29,6 +29,11 @@ class JqGridExtension extends \Twig_Extension {
     protected $environment;
 
     /**
+     * @var string
+     */
+    protected $theme;
+    
+    /**
      * @var \Twig_TemplateInterface[]
      */
     protected $templates;
@@ -49,13 +54,19 @@ class JqGridExtension extends \Twig_Extension {
     public function getFunctions() {
         return array(
             'jqgrid_js' => new \Twig_Function_Method($this, 'renderGrid', array('is_safe' => array('html'))),
+            'jqgrid_js_additional' => new \Twig_Function_Method($this, 'renderAdditional', array('is_safe' => array('html'))),
         );
     }
 
-    public function renderGrid(Grid $grid) {
+    public function renderGrid(Grid $grid, $theme = null) {
+      $this->theme = $theme;
         if (!$grid->isOnlyData()) {
             return $this->renderBlock('gridjs', array('grid' => $grid));
         }
+    }
+
+    public function renderAdditional(Grid $grid) {
+            return $this->renderBlock('additional', array('grid' => $grid));
     }
 
     /**
@@ -97,9 +108,35 @@ class JqGridExtension extends \Twig_Extension {
      * @return \Twig_TemplateInterface[]
      * @throws \Exception
      */
-    private function getTemplates() {
-        if (empty($this->templates)) {
-            $this->templates[] = $this->environment->loadTemplate($this::DEFAULT_TEMPLATE);
+    private function getTemplates()
+    {
+        if (empty($this->templates))
+        {
+            //get template name
+            if ($this->theme instanceof \Twig_Template)
+            {
+                $this->templates[] = $this->theme;
+                $this->templates[] = $this->environment->loadTemplate($this::DEFAULT_TEMPLATE);
+            }
+            elseif (is_string($this->theme))
+            {
+                $template = $this->environment->loadTemplate($this->theme);
+                while ($template != null)
+                {
+                    $this->templates[] = $template;
+                    $template = $template->getParent(array());
+                }
+
+                $this->templates[] = $this->environment->loadTemplate($this->theme);
+            }
+            elseif (is_null($this->theme))
+            {
+                $this->templates[] = $this->environment->loadTemplate($this::DEFAULT_TEMPLATE);
+            }
+            else
+            {
+                throw new \Exception('Unable to load template');
+            }
         }
 
         return $this->templates;

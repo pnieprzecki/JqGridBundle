@@ -3,7 +3,6 @@
 <div id="{{grid.name|raw}}_wrapper" {% if grid.hideifempty %}style="display: none;"{% endif %}>
     <table class="eps_jqgrid" id="{{grid.name|raw}}"></table>
     <div id="pager_{{grid.name|raw}}"></div>
-    <hr/>
 </div>
     
     
@@ -59,17 +58,19 @@
                 }
             },
             {% endif %}
-            colNames:[{{grid.columnsnames|raw}}], 
+            colNames:[{% for col in grid.columns %}'{{col.name|trans}}', {% endfor %}], 
             colModel:[ 
                 {{grid.columnscolmodel|raw}}
             ], 
             {{  grid.options|raw }}
             {% if grid.caption != '' %}caption:"{{grid.caption}}", {% endif %}
             pager: '#pager_{{grid.name|raw}}'
+            ,{{ jqgrid_js_additional(grid) }}
+            
         }); 
         
-        jQuery("#{{grid.name|raw}}").jqGrid('navGrid','#pager_{{grid.name|raw}}',{view:true,search:false, edit:false,add:false,del:false});
-        jQuery("#{{grid.name|raw}}").navGrid("#pager_{{grid.name|raw}}").navSeparatorAdd("#pager_{{grid.name|raw}}", {sepclass : "ui-separator",sepcontent: ''}).navButtonAdd("#pager_{{grid.name|raw}}",{id : "resetSearch_{{grid.name|raw}}" ,caption:"", buttonicon:"ui-icon-home", onClickButton:null, position: "last", title:"Réinitialiser les filtres", cursor: "pointer"});
+        jQuery("#{{grid.name|raw}}").jqGrid('navGrid','#pager_{{grid.name|raw}}',{view:true, search:false, edit:true, add:false, del:false});
+        jQuery("#{{grid.name|raw}}").navGrid("#pager_{{grid.name|raw}}").navSeparatorAdd("#pager_{{grid.name|raw}}", {sepclass : "ui-separator",sepcontent: ''}).navButtonAdd("#pager_{{grid.name|raw}}",{id : "resetSearch_{{grid.name|raw}}" ,caption:"", buttonicon:"ui-icon-home", onClickButton:null, position: "last", cursor: "pointer", title: "Reset filters"});
         
         jQuery("#{{grid.name|raw}}").jqGrid('filterToolbar',{stringResult:true, searchOnEnter:true, defaultSearch:"cn"});
         
@@ -84,3 +85,5 @@
     </script>
 {% endspaceless %}
 {% endblock gridjs %}
+    
+ {% block additional %}{% endblock %}
