@@ -1,155 +1,169 @@
 <?php
 
 namespace EPS\JqGridBundle\Grid;
-
-
 /**
  * Description of Column
  *
  * @author pascal
  */
-class Column
+class Column extends GridTools
 {
 
-  private $name;
-  private $colmodel;
+    private $name;
+    private $colmodel;
+    private $router;
 
-  public function __construct($name = null)
-  {
-    if ($name != null) {
-      $this->name = $name;
-    }
-  }
+    public function __construct($router, $name = null)
+    {
 
-
-  public function getName()
-  {
-    return $this->name;
-  }
-
-
-  public function setName($name)
-  {
-    $this->name = $name;
-  }
-
-
-  public function setColModel(array $colmodel)
-  {
-    $this->colmodel = $colmodel;
-  }
-
-
-  public function getColModel()
-  {
-    return $this->colmodel;
-  }
-
-
-  public function getFieldName()
-  {
-    return $this->colmodel['name'];
-  }
-
-
-  public function getFieldValue()
-  {
-    if (array_key_exists('value', $this->colmodel)) {
-      return $this->colmodel['value'];
-    }
-    else {
-      return false;
-    }
-  }
-
-
-  public function getFieldIndex()
-  {
-    if (array_key_exists('index', $this->colmodel)) {
-      return $this->colmodel['index'];
-    }
-    else {
-      return false;
-    }
-  }
-
-
-  public function getFieldTwig()
-  {
-    if (array_key_exists('twig', $this->colmodel)) {
-      return $this->colmodel['twig'];
-    }
-    else {
-      return false;
-    }
-  }
-
-
-  public function getFieldHaving()
-  {
-    if (array_key_exists('having', $this->colmodel)) {
-      return $this->colmodel['having'];
-    }
-    else {
-      return false;
-    }
-  }
-
-
-  public function getFieldFormatter()
-  {
-    if (array_key_exists('formatter', $this->colmodel)) {
-      return $this->colmodel['formatter'];
-    }
-    else {
-      return false;
-    }
-  }
-
-
-  public function getColModelJson($prefix = '')
-  {
-    $model = $this->colmodel;
-    $dp    = '';
-    $sopt  = '';
-
-    if (array_key_exists('sopt', $model) && $model['sopt']) {
-      $sopt = '"sopt": ' . json_encode($model['sopt']) . ', ';
+        $this->router = $router;
+        if ($name != null) {
+            $this->name = $name;
+        }
     }
 
-    if (array_key_exists('datepicker', $model) && $model['datepicker']) {
-      $dp = ' ,"searchoptions" : {dataInit : datePick, ' . $sopt . ' "attr" : { "title": "Choisir une date" }}';
+    /**
+     * @param string $name
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
     }
 
-    unset($model['twig']);
-    unset($model['having']);
-    unset($model['value']);
-    unset($model['datepicker']);
-
-    //prefix index
-    if (array_key_exists('name', $model)) {
-      $model['name'] = $prefix . $model['name'];
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
-    // usuń ciapki z nazw funkcji
-    $jsFunctions = '';
-    if (array_key_exists('jsFunctions', $model) && $model['jsFunctions']) {
-      $jsFunctions = $model['jsFunctions'];
-      unset($model['jsFunctions']);
+    /**
+     * @param array $columnModel
+     */
+    public function setColModel(array $colmodel)
+    {
+        $this->colmodel = $colmodel;
     }
 
-    $models = json_encode($model);
-
-    if (isset($jsFunctions) && is_array($jsFunctions)) {
-      foreach ($jsFunctions as $func) {
-        $models = str_replace('"' . $func . '"', $func, $models);
-      }
+    /**
+     * @return array
+     */
+    public function getColModel()
+    {
+        return $this->colmodel;
     }
 
-    $models = substr($models, 0, strlen($models) - 1) . $dp . '}';
+    /**
+     * Generic getter for any jqgrid column model attribute
+     *
+     * @param string $fieldname
+     * @return mixed
+     */
+    private function getField($fieldname)
+    {
+        if (array_key_exists($fieldname, $this->colmodel)) {
+            return $this->colmodel[$fieldname];
+        } else {
+            return false;
+        }
+    }
 
-    return $models;
-  }
+    /**
+     * @return string
+     */
+    public function getFieldName()
+    {
+        return $this->getField('name');
+    }
 
+    /**
+     * @return mixed
+     */
+    public function getFieldValue()
+    {
+        return $this->getField('value');
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldIndex()
+    {
+        return $this->getField('index');
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldTwig()
+    {
+        return $this->getField('twig');
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldHaving()
+    {
+        return $this->getField('having');
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldAutocomplete()
+    {
+        return $this->getField('autocomplete');
+    }
+
+    /**
+     * @return string
+     */
+    public function getFieldFormatter()
+    {
+        return $this->getField('formatter');
+    }
+
+    /**
+     * Decorate specific column model attributes with
+     * values expected to build the view
+     *
+     * @param string $prefix
+     *
+     * @return array
+     */
+    public function getColModelJson($prefix = '')
+    {
+        $model = $this->colmodel;
+        $dp = '';
+
+        if (array_key_exists('datepicker', $model) && $model['datepicker']) {
+            $dp = ' ,"searchoptions" : {dataInit : datePick, "attr" : { "title": "Choisir une date" }}';
+        }
+
+        if (array_key_exists('autocomplete', $model)) {
+            $route = $this->router->generate($model['autocomplete']);
+            $dp = ' ,"searchoptions" : {dataInit : function(elem) { $(elem).autocomplete({source:\'' . $route . '\',minLength:2}) }}';
+        }
+
+        unset($model['twig']);
+        unset($model['having']);
+        unset($model['value']);
+        unset($model['datepicker']);
+        unset($model['autocomplete']);
+
+        //prefix index
+        if (array_key_exists('name', $model)) {
+            $model['name'] = $prefix . $model['name'];
+        }
+
+        $models = $this->encode($model);
+
+        $models = substr($models, 0, strlen($models) - 1) . $dp . '}';
+
+        return $models;
+    }
 
 }
+

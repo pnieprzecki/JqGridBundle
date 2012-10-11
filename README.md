@@ -4,9 +4,14 @@ JqGridBundle
 JqGrid implementation for Symfony2.
 
 
-**Compatibility**: Tested with Symfony 2.0.12
+**Compatibility**: Tested with Symfony > 2.0.12
 
 [Full working demo](https://github.com/michelpa/demoJqGrid)
+
+CHANGELOG
+---------
+
+2012-06-04: BC break - change rendering function jqgrid_js to jqgrid
 
 
 Installation
@@ -48,7 +53,7 @@ Installation
          {
              return array(
                  // ...
-                 new EPS\JqGridBundle\JqGridBundle(),
+                 new EPS\JqGridBundle\EPSJqGridBundle(),
                  // ...
              );
          }
@@ -64,6 +69,23 @@ Installation
      *CSS*
 
          bundles/epsjqgrid/css/ui.jqgrid.css
+
+5. **Configuration**
+
+in config.yml:
+
+
+	eps_jq_grid: ~
+
+
+ or if you want to specify the date format (for datepicker), you've got to set the date format in js AND in php format (conversion):
+
+ 
+	eps_jq_grid: 
+	    datepicker_format: dd/mm/yy
+	    datepickerphp_format: d/m/Y
+
+   
 
 Grid example
 ------------

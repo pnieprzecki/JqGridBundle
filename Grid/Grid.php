@@ -1,376 +1,493 @@
 <?php
 
 namespace EPS\JqGridBundle\Grid;
-
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\Query;
+use EPS\JqGridBundle\FilterMapper\FilterMapperFactory;
 
 //use Doctrine\ORM\Query;
-
 
 /**
  * Description of Grid
  *
  * @author pascal
  */
-class Grid
+class Grid extends GridTools
 {
 
-  /**
-   * @var \Symfony\Component\DependencyInjection\Container
-   */
-  private $container;
+    /**
+     * @var \Symfony\Component\DependencyInjection\Container
+     */
+    private $container;
 
-  /**
-   * @var \Symfony\Component\HttpFoundation\Session;
-   */
-  private $session;
-  private $paginator;
+    /**
+     * @var \Knp\Component\Pager\Paginator
+     */
+    protected $paginator;
 
-  /**
-   * @var \Symfony\Component\HttpFoundation\Request
-   */
-  private $request;
-  private $onlyData;
-  private $em;
+    /**
+     * @var \Symfony\Component\Routing\Router
+     */
+    protected $router;
 
-  /**
-   * @var \Symfony\Component\Routing\Router
-   */
-  private $router;
-  private $templating;
-  private $qb;
-  private $name;
-  private $caption;
-  private $columns;
-  private $options;
-  private $routeforced;
-  private $hideifempty;
+    /**
+     * @var \Symfony\Component\HttpFoundation\Request
+     */
+    protected $request;
 
-  /**
-   * @var string
-   */
-  private $hash;
+    /**
+     * @var \Doctrine\Common\Persistence\ObjectManager
+     */
+    protected $em;
 
-  public function __construct($container, $paginator)
-  {
-    $this->container = $container;
+    /**
+     * @var \Twig_TemplateInterface
+     */
+    protected $templating;
 
-    $this->router = $container->get('router');
-    $this->request = $container->get('request');
-    $this->session = $this->request->getSession();
-    $this->paginator = $paginator;
-    $this->em = $container->get('doctrine.orm.entity_manager');
-    $this->templating = $container->get('templating');
-    $this->columns = array();
-    $this->setDefaultOptions();
-    $this->caption = '';
-    $this->routeforced = '';
-    $this->hideifempty = false;
+    /**
+     * @var \Symfony\Component\HttpFoundation\Session;
+     */
+    private $session;
 
-    if ($this->request->isXmlHttpRequest()) {
-      $this->onlyData = true;
-    }
-    else {
-      $this->onlyData = false;
-    }
+    /**
+     * @var array
+     */
+    protected $columns;
 
-    //nom par defaut
-    $now = new \DateTime();
-    $this->name = md5($now->format('Y-m-d H:i:s:u'));
+    /**
+     * @var string
+     */
+    protected $caption;
 
-    unset($this->routeParameters['_route']);
-  }
+    private $onlyData;
 
+    private $qb;
+    private $name;
+    private $options;
+    private $routeforced;
+    private $hideifempty;
+    private $navOptions;
 
-  public function setSource(QueryBuilder $qb)
-  {
-    $this->qb = $qb;
-    //generate hash
-    $this->createHash();
-  }
+    /**
+     * @var string
+     */
+    protected $datePickerFormat;
 
+    /**
+     * @var string
+     */
+    protected $datePickerPhpFormat;
 
-  public function addColumn($name, $colmodel)
-  {
-    $col = new Column();
-    $col->setName($name);
-    $col->setColModel($colmodel);
-    $this->columns[] = $col;
-    return $col;
-  }
+    /**
+     * @var string
+     */
+    private $hash;
 
+    /**
+     * @var \EPS\JqGridBundle\Grid\Grid
+     */
+    protected $subGrid;
 
-  public function getColumns()
-  {
-    return $this->columns;
-  }
+    /**
+     * @param \Symfony\Component\DependencyInjection\Container $container
+     */
+    public function __construct($container)
+    {
+        $this->container = $container;
 
+        $this->router = $this->container->get('router');
+        $this->request = $this->container->get('request');
+        $this->session = $this->request->getSession();
+        $this->paginator = $this->container->get('knp_paginator');
+        $this->em = $this->container->get('doctrine.orm.entity_manager');
+        $this->templating = $this->container->get('templating');
+        $this->columns = array();
+        $this->setDefaultOptions();
+        $this->caption = '';
+        $this->routeforced = '';
+        $this->hideifempty = false;
 
-  public function getColumnsNames()
-  {
-    $tabColNames = array();
-    foreach ($this->columns as $c) {
-      $tabColNames[] = '\'' . $c->getName() . '\'';
-    }
-    $colnames      = implode(', ', $tabColNames);
-    return $colnames;
-  }
+        if ($this->request->isXmlHttpRequest()) {
+            $this->onlyData = true;
+        } else {
+            $this->onlyData = false;
+        }
 
+        //nom par defaut
+        $now = new \DateTime();
+        $this->name = md5($now->format('Y-m-d H:i:s:u'));
 
-  public function getColumnsColModel()
-  {
-    $tabcolmodels = array();
-
-    foreach ($this->columns as $c) {
-      $tabcolmodels[] = $c->getColModelJson($this->name);
+        unset($this->routeParameters['_route']);
     }
 
-    $colmodels = implode(', ', $tabcolmodels);
-
-    return $colmodels;
-  }
-
-
-  public function setName($name)
-  {
-    $this->name = $name;
-  }
-
-
-  public function getName()
-  {
-    return $this->name;
-  }
-
-
-  public function setHideIfEmpty($hideifempty)
-  {
-    $this->hideifempty = $hideifempty;
-  }
-
-
-  public function getHideIfEmpty()
-  {
-    return $this->hideifempty;
-  }
-
-
-  public function setCaption($caption)
-  {
-    $this->caption = $caption;
-  }
-
-
-  public function getCaption()
-  {
-    return $this->caption;
-  }
-
-
-  public function getRouteUrl()
-  {
-    if ($this->routeforced != '') {
-      return $this->routeforced;
+    /**
+     * @param string $format A Jquery Datepicker Plugin date format
+     *
+     * @see http://jqueryui.com/demos/datepicker/
+     */
+    public function setDatePickerFormat($format)
+    {
+        $this->datePickerFormat = $format;
     }
-    else {
-      return $this->router->generate($this->request->get('_route'));
+
+    /**
+     * @return string A Jquery Datepicker Plugin date format
+     *
+     * @see http://jqueryui.com/demos/datepicker/
+     */
+    public function getDatePickerFormat()
+    {
+        return $this->datePickerFormat;
     }
-  }
 
-
-  public function setRouteForced($route)
-  {
-    $this->routeforced = $route;
-  }
-
-
-  public function isOnlyData()
-  {
-    return $this->onlyData;
-  }
-
-
-  public function createHash()
-  {
-    $this->hash = 'grid_' . md5($this->request->get('_controller') . $this->getName());
-    $this->session->set($this->getHash(), 'Y');
-  }
-
-
-  public function getHash()
-  {
-    return $this->hash;
-  }
-
-
-  public function render()
-  {
-    if ($this->isOnlyData()) {
-      $response = new Response();
-      $response->setContent(json_encode($this->getData()));
-      $response->headers->set('Content-Type', 'application/json');
-      return $response;
+    /**
+     * @param string $format A PHP date format
+     *
+     * @see http://br2.php.net/manual/en/function.date.php
+     */
+    public function setDatePickerPhpFormat($format)
+    {
+        $this->datePickerPhpFormat = $format;
     }
-    else {
-      return array('grid' => $this);
+
+    /**
+     * @return string A PHP date format
+     *
+     * @see http://br2.php.net/manual/en/function.date.php
+     */
+    public function getDatePickerPhpFormat()
+    {
+        return $this->datePickerPhpFormat;
     }
-  }
 
+    /**
+     * Set the query builder that will be used to get data to the grid
+     *
+     * @param \Doctrine\ORM\QueryBuilder $queryBuilder
+     */
+    public function setSource(QueryBuilder $qb)
+    {
+        $this->qb = $qb;
+        //generate hash
+        $this->createHash();
+    }
 
-  public function getData()
-  {
-    if ($this->session->get($this->getHash()) == 'Y') {
+    public function addColumn($name, $colmodel)
+    {
+        $col = new Column($this->router);
+        $col->setName($name);
+        $col->setColModel($colmodel);
+        $this->columns[] = $col;
 
-      $page   = $this->request->query->get('page');
-      $limit  = $this->request->query->get('rows');
-      $sidx   = $this->request->query->get('sidx');
-      $sord   = $this->request->query->get('sord');
-      $search = $this->request->query->get('_search');
+        return $col;
+    }
 
-      if ($sidx != '') {
-        $this->qb->orderBy($sidx, $sord);
-      }
+    /**
+     * Return an array with column definitions
+     *
+     * @return array
+     */
+    public function getColumns()
+    {
+        return $this->columns;
+    }
 
-      if ($search == 'true') {
-        $paramnumber = 1;
-        $filters     = json_decode($this->request->query->get('filters'), true);
-        $rules       = $filters['rules'];
+    public function getColumnsNames()
+    {
+        $tabColNames = array();
+        foreach ($this->columns as $c) {
+            $tabColNames[] = '\'' . $c->getName() . '\'';
+        }
+        $colnames = implode(', ', $tabColNames);
+
+        return $colnames;
+    }
+
+    public function getColumnsColModel()
+    {
+        $tabcolmodels = array();
+
+        foreach ($this->columns as $c) {
+            $tabcolmodels[] = $c->getColModelJson($this->name);
+        }
+
+        $colmodels = implode(', ', $tabcolmodels);
+
+        return $colmodels;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function setHideIfEmpty($hideifempty)
+    {
+        $this->hideifempty = $hideifempty;
+    }
+
+    public function getHideIfEmpty()
+    {
+        return $this->hideifempty;
+    }
+
+    /**
+     * @param string $caption
+     */
+    public function setCaption($caption)
+    {
+        $this->caption = $caption;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCaption()
+    {
+        return $this->caption;
+    }
+
+    public function getRouteUrl()
+    {
+        if ($this->routeforced != '') {
+            return $this->routeforced;
+        } else {
+            return $this->router->generate($this->request->get('_route'));
+        }
+    }
+
+    public function setRouteForced($route)
+    {
+        $this->routeforced = $route;
+    }
+
+    /**
+     * @return bool If true (Ajax Request), returns json. Else (Regular request), renders html
+     */
+    public function isOnlyData()
+    {
+        return $this->onlyData;
+    }
+
+    public function createHash()
+    {
+        $this->hash = 'grid_' . md5($this->request->get('_controller') . $this->getName());
+        $this->session->set($this->getHash(), 'Y');
+    }
+
+    /**
+     * @return string A hash that identifies the grid
+     */
+    public function getHash()
+    {
+        return $this->hash;
+    }
+
+    /**
+     * @param \EPS\JqGridBundle\Grid $grid
+     */
+    public function setSubGrid(\EPS\JqGridBundle\Grid $grid)
+    {
+        $this->subGrid = $grid;
+    }
+
+    /**
+     * @return \EPS\JqGridBundle\Grid
+     */
+    public function getSubGrid()
+    {
+        return $this->subGrid;
+    }
+    
+    /**
+     * @return \Doctrine\ORM\QueryBuilder
+     */
+    public function getQueryBuilder()
+    {
+        return $this->qb;
+    }
+    
+    
+
+    public function render()
+    {
+        if ($this->isOnlyData()) {
+
+            $content = $this->encode($this->getData());
+
+            $response = new Response();
+            $response->setContent($content);
+            $response->headers->set('Content-Type', 'application/json');
+
+            return $response;
+        } else {
+            return array(
+                'grid' => $this
+            );
+        }
+    }
+
+    public function getData()
+    {
+        if ($this->session->get($this->getHash()) == 'Y') {
+
+            $page = $this->request->query->get('page');
+            $limit = $this->request->query->get('rows');
+            $sidx = $this->request->query->get('sidx');
+            $sord = $this->request->query->get('sord');
+            $search = $this->request->query->get('_search');
+
+            if ($sidx != '') {
+                $this->qb->orderBy($sidx, $sord);
+            }
+
+            if ($search) {
+                $this->generateFilters();
+            }
+
+            $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), $page, $limit);
+
+            $nbRec = $pagination->getTotalItemCount();
+
+            if ($nbRec > 0) {
+                $total_pages = ceil($nbRec / $limit);
+            } else {
+                $total_pages = 0;
+            }
+
+            $response = array(
+                'page' => $page, 'total' => $total_pages, 'records' => $nbRec
+            );
+
+            foreach ($pagination as $key => $item) {
+                $row = $item;
+
+                $val = array();
+                foreach ($this->columns as $c) {
+                    if (array_key_exists($c->getFieldName(), $row)) {
+                        $val[] = $row[$c->getFieldName()];
+                    } elseif ($c->getFieldValue()) {
+                        $val[] = $c->getFieldValue();
+                    } elseif ($c->getFieldTwig()) {
+                        $val[] = $this->templating
+                                      ->render($c->getFieldTwig(),
+                                        array(
+                                            'ligne' => $row
+                                        ));
+                    } else {
+                        $val[] = ' ';
+                    }
+                }
+
+                $response['rows'][$key]['cell'] = $val;
+            }
+
+            return $response;
+        } else {
+            throw \Exception('Invalid query');
+        }
+    }
+
+    public function setDefaultOptions()
+    {
+        $this->options = array(
+                'height' => '100%', 'rowNum' => 10, 'rowList' => array(
+                    10, 20, 30
+                ), 'datatype' => 'json', 'viewrecords' => true,
+        );
+
+        $this->navOptions = array(
+            'view' => false, 'search' => false, 'edit' => false, 'add' => false, 'del' => false,
+        );
+    }
+
+    public function setOptions(array $options)
+    {
+        foreach ($options as $k => $v) {
+            $this->options[$k] = $options[$k];
+        }
+    }
+
+    public function setNavOptions(array $options)
+    {
+        foreach ($options as $k => $v) {
+            $this->navOptions[$k] = $options[$k];
+        }
+    }
+
+    public function getNavOptions($json = true)
+    {
+        if ($json) {
+            $opts = json_encode($this->navOptions);
+            $opts = substr($opts, 1);
+            $opts = substr($opts, 0, strlen($opts) - 1);
+            $opts = $opts . ', ';
+
+            return $opts;
+        } else {
+            return $this->navOptions;
+        }
+
+    }
+
+    public function getOptions($json = true)
+    {
+        if ($json) {
+            $opts = json_encode($this->options);
+            $opts = substr($opts, 1);
+            $opts = substr($opts, 0, strlen($opts) - 1);
+            $opts = $opts . ', ';
+
+            return $opts;
+        } else {
+            return $this->options;
+        }
+    }
+
+    public function getCulture()
+    {
+        if ($l = $this->request->get('_locale') != '') {
+            return $l;
+        } else {
+            return \Locale::getDefault();
+        }
+    }
+
+    /*
+     * http://www.trirand.com/jqgridwiki/doku.php?id=wiki:search_config
+     */
+    protected function generateFilters()
+    {
+
+        $filters = $this->request->query->get('filters');
+
+        $filters = json_decode($filters, true);
+        $rules = $filters['rules'];
+        $groupOp = $filters['groupOp']; //AND or OR
 
         if ($rules) {
-          foreach ($rules as $rule) {
-            foreach ($this->columns as $c) {
-              if ($c->getFieldIndex() == $rule['field']) {
-                //est-ce une date
-                if ($c->getFieldFormatter() == 'date') {
-                  $tmp        = explode("/", $rule['data']);
-                  $dateString = $tmp[2] . "-" . $tmp[1] . "-" . $tmp[0];
-                  $date       = new \DateTime($dateString);
-                  switch ($rule['op']) {
-                    case 'ge':
-                      $this->qb->andWhere($c->getFieldIndex() . ' >=  ?' . $paramnumber);
-                      break;
-                    case 'le':
-                      $this->qb->andWhere($c->getFieldIndex() . ' <=  ?' . $paramnumber);
-                      break;
-                    default:
-                      $this->qb->andWhere($c->getFieldIndex() . ' >  ?' . $paramnumber);
-                      break;
-                  }
-                  $this->qb->setParameter($paramnumber, $date);
+            foreach ($rules as $rule) {
+                foreach ($this->columns as $column) {
+                    if ($column->getFieldIndex() == $rule['field']) {
+                        $filterMapper = FilterMapperFactory::getFilterMapper($this, $column);
+                        $filterMapper->execute($rule, $groupOp);
+                    }
                 }
-                elseif ($c->getFieldHaving()) {
-                  $this->qb->having($c->getFieldHaving() . " =  ?$paramnumber");
-                  $this->qb->setParameter($paramnumber, $rule['data']);
-                  $paramnumber++;
-                }
-                else {
-                  $this->qb->andWhere('LOWER(' . $c->getFieldIndex() . ") LIKE  ?$paramnumber");
-                  $this->qb->setParameter($paramnumber, '%' . strtolower($rule['data']) . '%');
-                  $paramnumber++;
-                }
-              }
             }
-          }
         }
-      }
-
-      $pagination = $this->paginator->paginate(
-          $this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), $page/* page number */, $limit/* limit per page */
-      );
-
-      $nbRec = $pagination->getTotalItemCount();
-
-      if ($nbRec > 0) {
-        $total_pages = ceil($nbRec / $limit);
-      }
-      else {
-        $total_pages = 0;
-      }
-
-      $response = array();
-      $response['page']    = $page;
-      $response['total']   = $total_pages;
-      $response['records'] = $nbRec;
-
-
-      foreach ($pagination as $key => $item) {
-        $row = $item;
-
-        $val = array();
-        foreach ($this->columns as $c) {
-          if (array_key_exists($c->getFieldName(), $row)) {
-            $val[] = $row[$c->getFieldName()];
-          }
-          elseif ($c->getFieldValue()) {
-            $val[] = $c->getFieldValue();
-          }
-          elseif ($c->getFieldTwig()) {
-            $val[] = $this->templating->render($c->getFieldTwig(), array('ligne' => $row));
-          }
-          else {
-            $val[] = ' ';
-          }
-        }
-
-        $response['rows'][$key]['cell'] = $val;
-        $response['rows'][$key]['id'] = $row['id'];
-      }
-
-      return $response;
     }
-    else {
-      throw \Exception('Invalid query');
-    }
-  }
-
-
-  public function setDefaultOptions()
-  {
-    $this->options = array(
-        'height'  => '100%',
-        'rowNum'  => 10,
-        'rowList' => array(10, 20, 30),
-        'datatype'    => 'json',
-        'viewrecords' => true,
-    );
-  }
-
-
-  public function setOptions(array $options)
-  {
-    foreach ($options as $k => $v) {
-      $this->options[$k] = $options[$k];
-    }
-  }
-
-
-  public function getOptions($json = true)
-  {
-    if ($json) {
-      $opts = json_encode($this->options);
-      $opts = substr($opts, 1);
-      $opts = substr($opts, 0, strlen($opts) - 1);
-      $opts = $opts . ', ';
-
-      return $opts;
-    }
-    else {
-      return $this->options;
-    }
-  }
-
-
-  public function getCulture()
-  {
-    if ($l = $this->request->get('_locale') != '') {
-      return $l;
-    }
-    else {
-      return \Locale::getDefault();
-    }
-  }
-
 
 }
