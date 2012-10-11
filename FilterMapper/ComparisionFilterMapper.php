@@ -40,13 +40,13 @@ class ComparisionFilterMapper extends AbstractFilterMapper
                 break;
 
             case 'bw':
-                $where = $expression->like($this->column->getFieldIndex(), ":{$this->column->getFieldName()}");
-                $parameter = $rule['data'] . '%';
+                $where = 'LOWER(' . $this->column->getFieldIndex() . ") LIKE :{$this->column->getFieldName()}";
+                $parameter = strtolower($rule['data']) . '%';
                 break;
 
             case 'bn':
-                $where = $this->column->getFieldIndex() . " NOT LIKE :{$this->column->getFieldName()}";
-                $parameter = $rule['data'] . '%';
+                $where = 'LOWER(' . $this->column->getFieldIndex() . ") NOT LIKE :{$this->column->getFieldName()}";
+                $parameter = strtolower($rule['data']) . '%';
                 break;
 
             case 'nu':
@@ -106,23 +106,23 @@ class ComparisionFilterMapper extends AbstractFilterMapper
                 break;
 
             case 'ew':
-                $where = $expression->like($this->column->getFieldIndex(), ":{$this->column->getFieldName()}");
-                $parameter = '%' . $rule['data'];
+                $where = 'LOWER(' . $this->column->getFieldIndex() . ") LIKE :{$this->column->getFieldName()}";
+                $parameter = '%' . strtolower($rule['data']);
                 break;
 
             case 'en':
-                $where = $this->column->getFieldIndex() . " NOT LIKE :{$this->column->getFieldName()}";
-                $parameter = '%' . $rule['data'];
+                $where = 'LOWER(' . $this->column->getFieldIndex() . ") NOT LIKE :{$this->column->getFieldName()}";
+                $parameter = '%' . strtolower($rule['data']);
                 break;
 
             case 'nc':
-                $where = $this->column->getFieldIndex() . " NOT LIKE :{$this->column->getFieldName()}";
-                $parameter = '%' . $rule['data'] . '%';
+                $where = 'LOWER(' . $this->column->getFieldIndex() . ") NOT LIKE :{$this->column->getFieldName()}";
+                $parameter = '%' . strtolower($rule['data']) . '%';
                 break;
 
             default: // Case 'cn' (contains)
-                $where = $expression->like($this->column->getFieldIndex(), ":{$this->column->getFieldName()}");
-                $parameter = '%' . $rule['data'] . '%';
+                $where = 'LOWER(' . $this->column->getFieldIndex() . ") LIKE :{$this->column->getFieldName()}";
+                $parameter = '%' . strtolower($rule['data']) . '%';
         }
 
         if ('OR' == $groupOperator) {
