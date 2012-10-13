@@ -63,7 +63,11 @@ class Grid extends GridTools
 
     private $onlyData;
 
+    /**
+     * @var \Doctrine\ORM\QueryBuilder;
+     */
     private $qb;
+    
     private $name;
     private $options;
     private $routeforced;
@@ -79,6 +83,11 @@ class Grid extends GridTools
      * @var string
      */
     protected $datePickerPhpFormat;
+    
+    /**
+     * @var array
+     */
+    private $storedParams;
 
     /**
      * @var string
@@ -285,7 +294,28 @@ class Grid extends GridTools
     public function createHash()
     {
         $this->hash = 'grid_' . md5($this->request->get('_controller') . $this->getName());
-        $this->session->set($this->getHash(), 'Y');
+        
+        $this->storedParams = $this->session->get($this->getHash());
+        
+        if (!is_array($this->storedParams)) {
+            $this->storedParams = array();
+        }
+        
+        $this->storedParams['flag'] = 'Y';
+        
+        $this->session->set($this->getHash(), $this->storedParams);
+    }
+    
+    public function getStoredParameter($name)
+    {
+        return $this->storedParams[$name];
+    }
+
+    public function setStoredParameter($name, $value)
+    {
+        $this->storedParams[$name] = $value;
+        $this->session->set($this->getHash(), $this->storedParams);
+        return $this;
     }
 
     /**
@@ -342,13 +372,15 @@ class Grid extends GridTools
 
     public function getData()
     {
-        if ($this->session->get($this->getHash()) == 'Y') {
+        if ($this->getStoredParameter('flag') == 'Y') {
 
             $page = $this->request->query->get('page');
             $limit = $this->request->query->get('rows');
             $sidx = $this->request->query->get('sidx');
             $sord = $this->request->query->get('sord');
             $search = $this->request->query->get('_search');
+            
+            $this->setStoredParameter('last_limit', $limit);
 
             if ($sidx != '') {
                 $this->qb->orderBy($sidx, $sord);
@@ -394,7 +426,7 @@ class Grid extends GridTools
 
                 $response['rows'][$key]['cell'] = $val;
             }
-
+            
             return $response;
         } else {
             throw \Exception('Invalid query');
