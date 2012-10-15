@@ -392,8 +392,6 @@ class Grid extends GridTools
                 $this->qb->orderBy($sidx, $sord);
             }
             
-            //$this->generateFilters('{"groupOp":"AND","rules":[{"field":"cm.pCorrectedDocumentDate","op":"cn","data":"2012/10/03"}]}');
-            
             if ('true' == $search) {
                 $filters = $this->request->query->get('filters');
                 if (null != $filters) {

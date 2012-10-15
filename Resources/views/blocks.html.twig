@@ -18,10 +18,10 @@
   };
 
   $(document).ready(function() {
-    var $configs = $.extend(
+    var configs = $.extend(
       {
         minDate: new Date(2012, 0, 1),
-        maxDate: new Date(2017, 11, 31)
+        maxDate: new Date(2017, 9, 13)
       },
       $.datepicker.regional['{{ grid.culture }}'],
       {
@@ -42,7 +42,7 @@
 
     datePick = function(elem)
     {
-        jQuery(elem).datepicker($configs);
+        jQuery(elem).datepicker(configs);
     }
 
 
@@ -86,6 +86,31 @@
     $("#resetSearch_{{ grid.name|raw }}").click(function() {
         jQuery("#{{ grid.name|raw }}")[0].clearToolbar();
     });
+    
+    /* fill gs inputs based on server data */
+    var cm = $("#{{ grid.name|raw}}").jqGrid("getGridParam", "colModel");
+    
+    //var data = {"groupOp":"AND","rules":[{"field":"cm.pCorrectedDocumentDate","op":"cn","data":"2012/10/01"}]};
+    var userData = $("#{{ grid.name|raw}}").jqGrid("getGridParam", "userData");
+    
+    if (userData.filters) {    
+      var rules = userData.filters.rules;
+    }
+    
+    if (rules) {
+      for (var k=0; k<rules.length; k++) {
+        var fieldIndex = rules[k].field;
+        var fieldData = rules[k].data;
+        for (var i=0; i<cm.length; i++) {
+          if (cm[i].index == fieldIndex) {
+            $("#gs_" + cm[i].name).val(fieldData);
+          }
+        }
+      }
+    }
+    
+    //var msg = cm[4].index;
+    //alert(data.rules[0].data);
 
     //$("#{{ grid.name|raw}}").setGridWidth($("#{{grid.name|raw}}_wrapper").width());
   });
