@@ -26,10 +26,11 @@
       $.datepicker.regional['{{ grid.culture }}'],
       {
         "dateFormat": "{{  grid.datepickerformat }}",
-        closeText: 'Close',
+        firstDay: 1,
+        closeText: '{% trans %}close{% endtrans %}',
         showButtonPanel: true,
-        changeYear: true,
-        changeMonth: true,
+//        changeYear: true,
+//        changeMonth: true,
         onSelect: function(dateText, inst) {
           var tmpid = $(this).closest('.ui-jqgrid-view').attr('id');
           if (tmpid) {
