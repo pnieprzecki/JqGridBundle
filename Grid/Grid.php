@@ -305,6 +305,9 @@ class Grid extends GridTools
         $this->storedParams['flag'] = 'Y';
         
         $this->session->set($this->getHash(), $this->storedParams);
+        
+        
+        $this->setOptions(array('userData' => array('filters' => json_decode($this->getStoredParameter('filters')))));
     }
     
     public function getStoredParameter($name, $defaultValue = null)
