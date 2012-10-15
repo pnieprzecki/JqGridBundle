@@ -293,7 +293,8 @@ class Grid extends GridTools
 
     public function createHash()
     {
-        $this->hash = 'grid_' . md5($this->request->get('_controller') . $this->getName());
+        //$this->hash = 'grid_' . md5($this->request->get('_controller') . $this->getName());
+        $this->hash = 'grid_' . md5($this->request->getPathInfo() . $this->getName());
         
         $this->storedParams = $this->session->get($this->getHash());
         
@@ -306,9 +307,13 @@ class Grid extends GridTools
         $this->session->set($this->getHash(), $this->storedParams);
     }
     
-    public function getStoredParameter($name)
+    public function getStoredParameter($name, $defaultValue = null)
     {
-        return $this->storedParams[$name];
+        if (isset($this->storedParams[$name]) && !empty($this->storedParams[$name])) {
+          return $this->storedParams[$name];
+        }
+        
+        return $defaultValue;
     }
 
     public function setStoredParameter($name, $value)
@@ -379,15 +384,28 @@ class Grid extends GridTools
             $sidx = $this->request->query->get('sidx');
             $sord = $this->request->query->get('sord');
             $search = $this->request->query->get('_search');
+            $clearFilter = $this->request->query->get('_clearFilter');
             
             $this->setStoredParameter('last_limit', $limit);
 
             if ($sidx != '') {
                 $this->qb->orderBy($sidx, $sord);
             }
-
-            if ($search) {
+            
+            //$this->generateFilters('{"groupOp":"AND","rules":[{"field":"cm.pCorrectedDocumentDate","op":"cn","data":"2012/10/03"}]}');
+            
+            if ('true' == $search) {
+                $filters = $this->request->query->get('filters');
+                if (null != $filters) {
+                  $this->setStoredParameter('filters', $filters);
+                }
                 $this->generateFilters();
+            } else {
+                if ('true' == $clearFilter) {
+                   $this->setStoredParameter('filters', '{"groupOp":"AND","rules":[]}');
+                } else {
+                    $this->generateFilters($this->getStoredParameter('filters'));
+                }
             }
 
             $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), $page, $limit);
@@ -438,11 +456,17 @@ class Grid extends GridTools
         $this->options = array(
                 'height' => '100%', 'rowNum' => 10, 'rowList' => array(
                     10, 20, 30
-                ), 'datatype' => 'json', 'viewrecords' => true,
+                ),
+            'datatype' => 'json',
+            'viewrecords' => true,
         );
 
         $this->navOptions = array(
-            'view' => false, 'search' => false, 'edit' => false, 'add' => false, 'del' => false,
+            'view' => false,
+            'search' => false,
+            'edit' => false,
+            'add' => false,
+            'del' => false,
         );
     }
 
@@ -501,11 +525,13 @@ class Grid extends GridTools
     /*
      * http://www.trirand.com/jqgridwiki/doku.php?id=wiki:search_config
      */
-    protected function generateFilters()
+    protected function generateFilters($filters = null)
     {
 
-        $filters = $this->request->query->get('filters');
-
+        if (null === $filters) {
+          $filters = $this->request->query->get('filters');
+        }
+        
         $filters = json_decode($filters, true);
         $rules = $filters['rules'];
         $groupOp = $filters['groupOp']; //AND or OR
