@@ -406,7 +406,7 @@ class Grid extends GridTools
   }
 
 
-  public function getData($allRows = false)
+  public function getData($forcedRowLimit = null)
   {
     if ($this->getStoredParameter('flag') == 'Y') {
 
@@ -439,11 +439,11 @@ class Grid extends GridTools
         }
       }
 
-      if (!$allRows) {
+      if (!$forcedRowLimit) {
         $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), $page, $limit);
       }
       else {
-        $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), 1, 2000);
+        $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), 1, min(array($forcedRowLimit, 2000)));
       }
 
       $nbRec = $pagination->getTotalItemCount();
