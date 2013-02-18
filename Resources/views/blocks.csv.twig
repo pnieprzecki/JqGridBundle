@@ -1,0 +1,16 @@
+{% block jqgrid_h %}
+{% spaceless %}
+{% endspaceless %}
+{% endblock jqgrid_h %}
+
+{% block jqgrid_j %}
+{% endblock jqgrid_j %}
+
+
+{% block jqgrid %}
+    {{ block("jqgrid_h") }}
+    {{ block("jqgrid_j") }}
+{% endblock jqgrid %}
+
+{% block jqgrid_csv %}
+{% endblock jqgrid_csv %}    
