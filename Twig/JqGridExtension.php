@@ -68,6 +68,12 @@ class JqGridExtension extends \Twig_Extension
                                 'html'
                             )
                         )),
+                'jqgrid_csv' => new \Twig_Function_Method($this, 'renderGridCsv',
+                        array(
+                            'is_safe' => array(
+                                'csv'
+                            )
+                        )),
         );
     }
 
@@ -89,6 +95,13 @@ class JqGridExtension extends \Twig_Extension
     {
         if (!$grid->isOnlyData()) {
             return $this->renderBlock('jqgrid_h', array('grid' => $grid));
+        }
+    }
+    
+    public function renderGridCsv(Grid $grid)
+    {
+        if (!$grid->isOnlyData()) {
+            return $this->renderBlock('jqgrid_csv', array('grid' => $grid));
         }
     }
 

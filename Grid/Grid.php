@@ -9,14 +9,12 @@ use EPS\JqGridBundle\FilterMapper\FilterMapperFactory;
 
 //use Doctrine\ORM\Query;
 
-
 /**
  * Description of Grid
  *
  * @author pascal
  */
-class Grid extends GridTools
-{
+class Grid extends GridTools {
 
   /**
    * @var \Symfony\Component\DependencyInjection\Container
@@ -102,97 +100,83 @@ class Grid extends GridTools
   /**
    * @param \Symfony\Component\DependencyInjection\Container $container
    */
-  public function __construct($container)
-  {
+  public function __construct($container) {
     $this->container = $container;
 
-    $this->router     = $this->container->get('router');
-    $this->request    = $this->container->get('request');
-    $this->session    = $this->request->getSession();
-    $this->paginator  = $this->container->get('knp_paginator');
-    $this->em         = $this->container->get('doctrine.orm.entity_manager');
+    $this->router = $this->container->get('router');
+    $this->request = $this->container->get('request');
+    $this->session = $this->request->getSession();
+    $this->paginator = $this->container->get('knp_paginator');
+    $this->em = $this->container->get('doctrine.orm.entity_manager');
     $this->templating = $this->container->get('templating');
-    $this->columns    = array();
+    $this->columns = array();
     $this->setDefaultOptions();
-    $this->caption     = '';
+    $this->caption = '';
     $this->routeforced = '';
     $this->hideifempty = false;
 
     if ($this->request->isXmlHttpRequest()) {
       $this->onlyData = true;
-    }
-    else {
+    } else {
       $this->onlyData = false;
     }
 
     //nom par defaut
-    $now        = new \DateTime();
+    $now = new \DateTime();
     $this->name = md5($now->format('Y-m-d H:i:s:u'));
 
     unset($this->routeParameters['_route']);
   }
-
 
   /**
    * @param string $format A Jquery Datepicker Plugin date format
    *
    * @see http://jqueryui.com/demos/datepicker/
    */
-  public function setDatePickerFormat($format)
-  {
+  public function setDatePickerFormat($format) {
     $this->datePickerFormat = $format;
   }
-
 
   /**
    * @return string A Jquery Datepicker Plugin date format
    *
    * @see http://jqueryui.com/demos/datepicker/
    */
-  public function getDatePickerFormat()
-  {
+  public function getDatePickerFormat() {
     return $this->datePickerFormat;
   }
-
 
   /**
    * @param string $format A PHP date format
    *
    * @see http://br2.php.net/manual/en/function.date.php
    */
-  public function setDatePickerPhpFormat($format)
-  {
+  public function setDatePickerPhpFormat($format) {
     $this->datePickerPhpFormat = $format;
   }
-
 
   /**
    * @return string A PHP date format
    *
    * @see http://br2.php.net/manual/en/function.date.php
    */
-  public function getDatePickerPhpFormat()
-  {
+  public function getDatePickerPhpFormat() {
     return $this->datePickerPhpFormat;
   }
-
 
   /**
    * Set the query builder that will be used to get data to the grid
    *
    * @param \Doctrine\ORM\QueryBuilder $queryBuilder
    */
-  public function setSource(QueryBuilder $qb)
-  {
+  public function setSource(QueryBuilder $qb) {
     $this->qb = $qb;
     //generate hash
     $this->createHash();
   }
 
-
-  public function addColumn($name, $colmodel)
-  {
-    $col             = new Column($this->router);
+  public function addColumn($name, $colmodel) {
+    $col = new Column($this->router);
     $col->setName($name);
     $col->setColModel($colmodel);
     $this->columns[] = $col;
@@ -200,32 +184,26 @@ class Grid extends GridTools
     return $col;
   }
 
-
   /**
    * Return an array with column definitions
    *
    * @return array
    */
-  public function getColumns()
-  {
+  public function getColumns() {
     return $this->columns;
   }
 
-
-  public function getColumnsNames()
-  {
+  public function getColumnsNames() {
     $tabColNames = array();
     foreach ($this->columns as $c) {
       $tabColNames[] = '\'' . $c->getName() . '\'';
     }
-    $colnames      = implode(', ', $tabColNames);
+    $colnames = implode(', ', $tabColNames);
 
     return $colnames;
   }
 
-
-  public function getColumnsColModel()
-  {
+  public function getColumnsColModel() {
     $tabcolmodels = array();
 
     foreach ($this->columns as $c) {
@@ -237,83 +215,62 @@ class Grid extends GridTools
     return $colmodels;
   }
 
-
   /**
    * @param string $name
    */
-  public function setName($name)
-  {
+  public function setName($name) {
     $this->name = $name;
   }
-
 
   /**
    * @return string
    */
-  public function getName()
-  {
+  public function getName() {
     return $this->name;
   }
 
-
-  public function setHideIfEmpty($hideifempty)
-  {
+  public function setHideIfEmpty($hideifempty) {
     $this->hideifempty = $hideifempty;
   }
 
-
-  public function getHideIfEmpty()
-  {
+  public function getHideIfEmpty() {
     return $this->hideifempty;
   }
-
 
   /**
    * @param string $caption
    */
-  public function setCaption($caption)
-  {
+  public function setCaption($caption) {
     $this->caption = $caption;
   }
-
 
   /**
    * @return string
    */
-  public function getCaption()
-  {
+  public function getCaption() {
     return $this->caption;
   }
 
-
-  public function getRouteUrl()
-  {
+  public function getRouteUrl() {
     if ($this->routeforced != '') {
       return $this->routeforced;
-    }
-    else {
+    } else {
       return $this->router->generate($this->request->get('_route'));
     }
   }
 
-
-  public function setRouteForced($route)
-  {
+  public function setRouteForced($route) {
     $this->routeforced = $route;
   }
-
 
   /**
    * @return bool If true (Ajax Request), returns json. Else (Regular request), renders html
    */
-  public function isOnlyData()
-  {
+  public function isOnlyData() {
     return $this->onlyData;
   }
 
-
-  public function createHash()
-  {
+  public function createHash() {
     //$this->hash = 'grid_' . md5($this->request->get('_controller') . $this->getName());
     $this->hash = 'grid_' . md5($this->request->getPathInfo() . $this->getName());
 
@@ -331,9 +288,7 @@ class Grid extends GridTools
     $this->setOptions(array('userData' => array('filters' => json_decode($this->getStoredParameter('filters')))));
   }
 
-
-  public function getStoredParameter($name, $defaultValue = null)
-  {
+  public function getStoredParameter($name, $defaultValue = null) {
     if (isset($this->storedParams[$name]) && !empty($this->storedParams[$name])) {
       return $this->storedParams[$name];
     }
@@ -341,53 +296,41 @@ class Grid extends GridTools
     return $defaultValue;
   }
 
-
-  public function setStoredParameter($name, $value)
-  {
+  public function setStoredParameter($name, $value) {
     $this->storedParams[$name] = $value;
     $this->session->set($this->getHash(), $this->storedParams);
     return $this;
   }
 
-
   /**
    * @return string A hash that identifies the grid
    */
-  public function getHash()
-  {
+  public function getHash() {
     return $this->hash;
   }
-
 
   /**
    * @param \EPS\JqGridBundle\Grid $grid
    */
-  public function setSubGrid(\EPS\JqGridBundle\Grid $grid)
-  {
+  public function setSubGrid(\EPS\JqGridBundle\Grid $grid) {
     $this->subGrid = $grid;
   }
-
 
   /**
    * @return \EPS\JqGridBundle\Grid
    */
-  public function getSubGrid()
-  {
+  public function getSubGrid() {
     return $this->subGrid;
   }
-
 
   /**
    * @return \Doctrine\ORM\QueryBuilder
    */
-  public function getQueryBuilder()
-  {
+  public function getQueryBuilder() {
     return $this->qb;
   }
 
-
-  public function render()
-  {
+  public function render() {
     if ($this->isOnlyData()) {
 
       $content = $this->encode($this->getData());
@@ -397,24 +340,21 @@ class Grid extends GridTools
       $response->headers->set('Content-Type', 'application/json');
 
       return $response;
-    }
-    else {
+    } else {
       return array(
           'grid' => $this
       );
     }
   }
 
-
-  public function getData($forcedRowLimit = null)
-  {
+  public function getData($forcedRowLimit = null) {
     if ($this->getStoredParameter('flag') == 'Y') {
 
-      $page        = $this->request->query->get('page');
-      $limit       = $this->request->query->get('rows');
-      $sidx        = $this->request->query->get('sidx');
-      $sord        = $this->request->query->get('sord');
-      $search      = $this->request->query->get('_search');
+      $page = $this->request->query->get('page');
+      $limit = $this->request->query->get('rows');
+      $sidx = $this->request->query->get('sidx');
+      $sord = $this->request->query->get('sord');
+      $search = $this->request->query->get('_search');
       $clearFilter = $this->request->query->get('_clearFilter');
 
       $this->setStoredParameter('last_limit', $limit);
@@ -429,34 +369,34 @@ class Grid extends GridTools
           $this->setStoredParameter('filters', $filters);
         }
         $this->generateFilters();
-      }
-      else {
+      } else {
         if ('true' == $clearFilter) {
           $this->setStoredParameter('filters', '{"groupOp":"AND","rules":[]}');
-        }
-        else {
+        } else {
           $this->generateFilters($this->getStoredParameter('filters'));
         }
       }
 
       if (!$forcedRowLimit) {
         $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), $page, $limit);
-      }
-      else {
+      } else {
         $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), 1, min(array($forcedRowLimit, 2000)));
       }
 
       $nbRec = $pagination->getTotalItemCount();
 
       if ($nbRec > 0) {
-        $total_pages = ceil($nbRec / $limit);
-      }
-      else {
+        if (!$forcedRowLimit) {
+          $total_pages = ceil($nbRec / $limit);
+        } else {
+          $total_pages = 1;
+        }
+      } else {
         $total_pages = 0;
       }
 
       $response = array(
-          'page'    => $page, 'total'   => $total_pages, 'records' => $nbRec
+          'page' => $page, 'total' => $total_pages, 'records' => $nbRec
       );
 
       foreach ($pagination as $key => $item) {
@@ -466,17 +406,14 @@ class Grid extends GridTools
         foreach ($this->columns as $c) {
           if (array_key_exists($c->getFieldName(), $row)) {
             $val[] = $row[$c->getFieldName()];
-          }
-          elseif ($c->getFieldValue()) {
+          } elseif ($c->getFieldValue()) {
             $val[] = $c->getFieldValue();
-          }
-          elseif ($c->getFieldTwig()) {
+          } elseif ($c->getFieldTwig()) {
             $val[] = $this->templating
-                ->render($c->getFieldTwig(), array(
+                    ->render($c->getFieldTwig(), array(
                 'ligne' => $row
-                ));
-          }
-          else {
+                    ));
+          } else {
             $val[] = ' ';
           }
         }
@@ -485,51 +422,42 @@ class Grid extends GridTools
       }
 
       return $response;
-    }
-    else {
+    } else {
       throw \Exception('Invalid query');
     }
   }
 
-
-  public function setDefaultOptions()
-  {
+  public function setDefaultOptions() {
     $this->options = array(
-        'height'  => '100%', 'rowNum'  => 10, 'rowList' => array(
+        'height' => '100%', 'rowNum' => 10, 'rowList' => array(
             10, 20, 30
         ),
-        'datatype'    => 'json',
+        'datatype' => 'json',
         'viewrecords' => true,
     );
 
     $this->navOptions = array(
-        'view'   => false,
+        'view' => false,
         'search' => false,
-        'edit'   => false,
-        'add'    => false,
-        'del'    => false,
+        'edit' => false,
+        'add' => false,
+        'del' => false,
     );
   }
 
-
-  public function setOptions(array $options)
-  {
+  public function setOptions(array $options) {
     foreach ($options as $k => $v) {
       $this->options[$k] = $options[$k];
     }
   }
 
-
-  public function setNavOptions(array $options)
-  {
+  public function setNavOptions(array $options) {
     foreach ($options as $k => $v) {
       $this->navOptions[$k] = $options[$k];
     }
   }
 
-
-  public function getNavOptions($json = true)
-  {
+  public function getNavOptions($json = true) {
     if ($json) {
       $opts = json_encode($this->navOptions);
       $opts = substr($opts, 1);
@@ -537,15 +465,12 @@ class Grid extends GridTools
       $opts = $opts . ', ';
 
       return $opts;
-    }
-    else {
+    } else {
       return $this->navOptions;
     }
   }
 
-
-  public function getOptions($json = true)
-  {
+  public function getOptions($json = true) {
     if ($json) {
       $opts = json_encode($this->options);
       $opts = substr($opts, 1);
@@ -553,36 +478,31 @@ class Grid extends GridTools
       $opts = $opts . ', ';
 
       return $opts;
-    }
-    else {
+    } else {
       return $this->options;
     }
   }
 
-
-  public function getCulture()
-  {
+  public function getCulture() {
     if ($l = $this->request->get('_locale') != '') {
       return $l;
-    }
-    else {
+    } else {
       return \Locale::getDefault();
     }
   }
 
-
   /*
    * http://www.trirand.com/jqgridwiki/doku.php?id=wiki:search_config
    */
-  protected function generateFilters($filters = null)
-  {
+
+  protected function generateFilters($filters = null) {
 
     if (null === $filters) {
       $filters = $this->request->query->get('filters');
     }
 
     $filters = json_decode($filters, true);
-    $rules   = $filters['rules'];
+    $rules = $filters['rules'];
     $groupOp = $filters['groupOp']; //AND or OR
 
     if ($rules) {
@@ -596,6 +516,5 @@ class Grid extends GridTools
       }
     }
   }
-
 
 }

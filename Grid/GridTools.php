@@ -1,4 +1,5 @@
 <?php
+
 namespace EPS\JqGridBundle\Grid;
 
 class GridTools
