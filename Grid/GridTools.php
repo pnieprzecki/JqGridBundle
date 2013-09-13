@@ -2,37 +2,58 @@
 
 namespace EPS\JqGridBundle\Grid;
 
+
 class GridTools
 {
-    protected function encode($input = array(), $funcs = array(), $level = 0)
-    {
 
-        foreach ($input as $key => $value) {
-            if (is_array($value)) {
-                $ret = self::encode($value, $funcs, 1);
-                $input[$key] = $ret[0];
-                $funcs = $ret[1];
-            } else {
-                if (strpos($value, 'function(') === 0 || strpos($value, 'var_') === 0) {
-                    $func_key = "#" . uniqid() . "#";
-                    $value = ltrim($value, 'var_');
-                    $funcs[$func_key] = $value;
-                    $input[$key] = $func_key;
-                }
-            }
-        }
-        if ($level == 1) {
-            return array(
-                $input, $funcs
-            );
-        } else {
-            $input_json = json_encode($input);
-            foreach ($funcs as $key => $value) {
-                $input_json = str_replace('"' . $key . '"', $value, $input_json);
-            }
+  protected function encode($input = array(), $funcs = array(), $level = 0)
+  {
 
-            return $input_json;
+    foreach ($input as $key => $value) {
+      if (is_object($value)) {
+        if ('DateTime' == get_class($value)) {
+          $v = '"'.$value->format('Y-m-d H:i:s').'"';
+          //throw new \Exception($v);
+            $func_key         = "#" . uniqid() . "#";
+            $value            = ltrim($v, 'var_');
+            $funcs[$func_key] = $v;
+            $input[$key]      = $func_key;
         }
+        else {
+          $ret         = self::encode($value, $funcs, 1);
+          $input[$key] = $ret[0];
+          $funcs       = $ret[1];
+        }
+      }
+      elseif (is_array($value)) {
+        $ret         = self::encode($value, $funcs, 1);
+        $input[$key] = $ret[0];
+        $funcs       = $ret[1];
+      }
+      else {
+        if (strpos($value, 'function(') === 0 || strpos($value, 'var_') === 0) {
+          $func_key         = "#" . uniqid() . "#";
+          $value            = ltrim($value, 'var_');
+          $funcs[$func_key] = $value;
+          $input[$key]      = $func_key;
+        }
+      }
     }
+
+    if ($level == 1) {
+      return array(
+          $input, $funcs
+      );
+    }
+    else {
+      $input_json = json_encode($input);
+      foreach ($funcs as $key => $value) {
+        $input_json = str_replace('"' . $key . '"', $value, $input_json);
+      }
+
+      return $input_json;
+    }
+  }
+
 
 }

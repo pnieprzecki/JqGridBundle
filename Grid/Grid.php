@@ -377,6 +377,7 @@ class Grid extends GridTools {
         }
       }
 
+      //$this->paginator->
       if (!$forcedRowLimit) {
         $pagination = $this->paginator->paginate($this->qb->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY), $page, $limit);
       } else {
